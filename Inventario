@@ -1,0 +1,79 @@
+#include <iostream>
+#include <string>
+#include <iomanip>
+#include <stdexcept>
+#include <ctime>
+using namespace std;
+
+// Estructura principal del producto
+struct Producto {
+    int id;
+    string nombre;
+    double precio;
+    int cantidad;
+    string proveedor;
+    int stockMinimo;  // Característica adicional
+    
+    // Método para calcular valor total (uso de estructura con función)
+    double calcularValorTotal() const {
+        return precio * cantidad;
+    }
+    
+    // Método para verificar si necesita reabastecimiento
+    bool requiereReabastecimiento() const {
+        return cantidad <= stockMinimo;
+    }
+};
+
+// Excepción personalizada para productos no encontrados
+class ExcepcionProductoNoEncontrado : public exception {
+private:
+    string mensaje;
+public:
+    ExcepcionProductoNoEncontrado(const string& msg) : mensaje(msg) {}
+    const char* what() const noexcept override {
+        return mensaje.c_str();
+    }
+};
+
+// Excepción para stock insuficiente
+class ExcepcionStockInsuficiente : public exception {
+private:
+    string mensaje;
+public:
+    ExcepcionStockInsuficiente(const string& msg) : mensaje(msg) {}
+    const char* what() const noexcept override {
+        return mensaje.c_str();
+    }
+};
+
+const int CAPACIDAD_MAXIMA = 50;
+const int PRODUCTOS_INICIALES = 12;
+
+// === PROTOTIPOS DE FUNCIONES ===
+void cargarInventarioInicial(Producto arr[], int& total);
+void mostrarEncabezado(const string& titulo);
+void presentarMenu();
+void listarInventarioCompleto(Producto arr[], int total);
+void registrarNuevoProducto(Producto arr[], int& total);
+void buscarProductoPorNombre(Producto arr[], int total);
+void buscarProductoPorCodigo(Producto arr[], int total);
+void aplicarOrdenamientoBurbuja(Producto arr[], int total, bool porPrecio);
+void aplicarOrdenamientoSeleccion(Producto arr[], int total);
+void gestionarStockConPunteros(Producto* ptr);
+void mostrarAlertasStock(Producto arr[], int total);
+void generarReporteSencillo(Producto arr[], int total);
+Producto* localizarProducto(Producto arr[], int total, int codigo);
+void intercambiar(Producto* a, Producto* b);
+void esperarUsuario();
+
+// === FUNCIÓN PRINCIPAL ===
+int main() {
+    Producto inventario[CAPACIDAD_MAXIMA];
+    int totalProductos = 0;
+    int eleccion;
+    
+    cargarInventarioInicial(inventario, totalProductos);
+    
+    cout << "\n";
+    mostrarEncabezado("SISTEMA DE CONTROL DE INVENTARIO");
