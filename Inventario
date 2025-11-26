@@ -77,3 +77,194 @@ int main() {
     
     cout << "\n";
     mostrarEncabezado("SISTEMA DE CONTROL DE INVENTARIO");
+
+
+ do {
+        presentarMenu();
+        cout << "\nIngrese su opcion: ";
+        cin >> eleccion;
+        cin.ignore();
+        
+        try {
+            switch(eleccion) {
+                case 1:
+                    mostrarEncabezado("INVENTARIO GENERAL");
+                    listarInventarioCompleto(inventario, totalProductos);
+                    break;
+                    
+                case 2:
+                    mostrarEncabezado("REGISTRO DE PRODUCTO");
+                    registrarNuevoProducto(inventario, totalProductos);
+                    break;
+                    
+                case 3:
+                    mostrarEncabezado("BUSQUEDA POR NOMBRE");
+                    buscarProductoPorNombre(inventario, totalProductos);
+                    break;
+                    
+                case 4:
+                    mostrarEncabezado("BUSQUEDA POR CODIGO");
+                    buscarProductoPorCodigo(inventario, totalProductos);
+                    break;
+                    
+                case 5: {
+                    int subOpcion;
+                    mostrarEncabezado("ORDENAMIENTO DE INVENTARIO");
+                    cout << "1. Ordenar por PRECIO (Metodo Burbuja)" << endl;
+                    cout << "2. Ordenar por CANTIDAD (Metodo Seleccion)" << endl;
+                    cout << "Elija metodo: ";
+                    cin >> subOpcion;
+                    
+                    if(subOpcion == 1) {
+                        aplicarOrdenamientoBurbuja(inventario, totalProductos, true);
+                        cout << "\n[OK] Inventario ordenado por PRECIO (menor a mayor)" << endl;
+                    } else if(subOpcion == 2) {
+                        aplicarOrdenamientoSeleccion(inventario, totalProductos);
+                        cout << "\n[OK] Inventario ordenado por CANTIDAD (menor a mayor)" << endl;
+                    }
+                    break;
+                }
+                    
+                case 6: {
+                    mostrarEncabezado("GESTION DE STOCK (PUNTEROS)");
+                    int codigo;
+                    cout << "Ingrese codigo del producto: ";
+                    cin >> codigo;
+                    Producto* ptrProducto = localizarProducto(inventario, totalProductos, codigo);
+                    gestionarStockConPunteros(ptrProducto);
+                    break;
+                }
+                    
+                case 7:
+                    mostrarEncabezado("ALERTAS DE INVENTARIO");
+                    mostrarAlertasStock(inventario, totalProductos);
+                    break;
+                    
+                case 8:
+                    mostrarEncabezado("REPORTE DE INVENTARIO");
+                    generarReporteSencillo(inventario, totalProductos);
+                    break;
+                    
+                case 0:
+                    mostrarEncabezado("CERRANDO SISTEMA");
+                    cout << "Gracias por utilizar el sistema. Hasta pronto!" << endl;
+                    break;
+                    
+                default:
+                    cout << "\n[ERROR] Opcion no valida. Intente nuevamente." << endl;
+            }
+            
+        } catch (const ExcepcionProductoNoEncontrado& e) {
+            cout << "\n[EXCEPCION] " << e.what() << endl;
+        } catch (const ExcepcionStockInsuficiente& e) {
+            cout << "\n[EXCEPCION] " << e.what() << endl;
+        } catch (const exception& e) {
+            cout << "\n[ERROR CRITICO] " << e.what() << endl;
+        }
+        
+        if(eleccion != 0) esperarUsuario();
+        
+    } while(eleccion != 0);
+    
+    return 0;
+}
+
+// === IMPLEMENTACIÓN DE FUNCIONES ===
+
+void cargarInventarioInicial(Producto arr[], int& total) {
+    arr[0] = {1001, "Laptop HP Pavilion 15", 18999.00, 8, "HP Mexico", 3};
+    arr[1] = {1002, "Mouse Inalambrico Logitech", 450.00, 22, "Logitech", 10};
+    arr[2] = {1003, "Teclado Mecanico Redragon", 1100.00, 15, "Redragon", 5};
+    arr[3] = {1004, "Monitor Samsung 24 pulgadas", 3200.00, 6, "Samsung", 2};
+    arr[4] = {1005, "Camara Web Full HD", 850.00, 12, "Genius", 5};
+    arr[5] = {1006, "Audifonos Sony Bluetooth", 2100.00, 18, "Sony Corp", 8};
+    arr[6] = {1007, "Disco SSD 500GB Kingston", 1350.00, 25, "Kingston Tech", 12};
+    arr[7] = {1008, "Memoria USB 64GB SanDisk", 280.00, 40, "SanDisk", 15};
+    arr[8] = {1009, "Impresora Multifuncional Epson", 3800.00, 5, "Epson", 2};
+    arr[9] = {1010, "Router WiFi TP-Link Dual Band", 1250.00, 10, "TP-Link", 4};
+    arr[10] = {1011, "Hub USB 4 Puertos", 320.00, 28, "Belkin", 10};
+    arr[11] = {1012, "Cable HDMI 2 metros", 180.00, 35, "Cables Inc", 20};
+    
+    total = PRODUCTOS_INICIALES;
+}
+
+void mostrarEncabezado(const string& titulo) {
+    cout << "\n" << string(70, '=') << endl;
+    cout << "  " << titulo << endl;
+    cout << string(70, '=') << endl;
+}
+
+void presentarMenu() {
+    cout << "\n--- MENU PRINCIPAL ---" << endl;
+    cout << "[1] Listar todos los productos" << endl;
+    cout << "[2] Agregar nuevo producto" << endl;
+    cout << "[3] Buscar por nombre" << endl;
+    cout << "[4] Buscar por codigo ID" << endl;
+    cout << "[5] Ordenar inventario" << endl;
+    cout << "[6] Modificar stock " << endl;
+    cout << "[7] Ver alertas de stock bajo" << endl;
+    cout << "[8] Generar reporte de inventario" << endl;
+    cout << "[9] Salir del sistema" << endl;
+}
+
+void listarInventarioCompleto(Producto arr[], int total) {
+    
+    cout << "\n" << left << setw(10) << "CODIGO" 
+         << setw(32) << "NOMBRE PRODUCTO"
+         << right << setw(12) << "PRECIO"
+         << setw(10) << "STOCK"
+         << setw(14) << "VALOR TOTAL" << endl;
+    cout << string(78, '-') << endl;
+    
+    for(int i = 0; i < total; i++) {
+        cout << left << setw(10) << arr[i].id
+             << setw(32) << arr[i].nombre.substr(0, 30)
+             << right << setw(12) << fixed << setprecision(2) << arr[i].precio
+             << setw(10) << arr[i].cantidad
+             << setw(14) << arr[i].calcularValorTotal() << endl;
+    }
+    
+    cout << string(78, '-') << endl;
+    cout << "TOTAL DE PRODUCTOS REGISTRADOS: " << total << endl;
+}
+
+void registrarNuevoProducto(Producto arr[], int& total) {
+    if(total >= CAPACIDAD_MAXIMA) {
+        throw runtime_error("Capacidad maxima alcanzada. No se pueden agregar mas productos.");
+    }
+    
+    Producto nuevo;
+    
+    cout << "\nCodigo del producto: ";
+    cin >> nuevo.id;
+    cin.ignore();
+    
+    // Verificar duplicados
+    for(int i = 0; i < total; i++) {
+        if(arr[i].id == nuevo.id) {
+            throw runtime_error("Ya existe un producto con ese codigo.");
+        }
+    }
+    
+    cout << "Nombre del producto: ";
+    getline(cin, nuevo.nombre);
+    
+    cout << "Precio unitario: $";
+    cin >> nuevo.precio;
+    
+    cout << "Cantidad en stock: ";
+    cin >> nuevo.cantidad;
+    
+    cout << "Stock minimo requerido: ";
+    cin >> nuevo.stockMinimo;
+    
+    cin.ignore();
+    cout << "Proveedor: ";
+    getline(cin, nuevo.proveedor);
+    
+    arr[total] = nuevo;
+    total++;
+    
+    cout << "\n[OK] Producto registrado exitosamente!" << endl;
+    cout << "Codigo asignado: " << nuevo.id << endl;
+}
