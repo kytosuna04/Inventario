@@ -268,3 +268,150 @@ void registrarNuevoProducto(Producto arr[], int& total) {
     cout << "\n[OK] Producto registrado exitosamente!" << endl;
     cout << "Codigo asignado: " << nuevo.id << endl;
 }
+
+void buscarProductoPorNombre(Producto arr[], int total) {
+    string termino;
+    cout << "\nIngrese nombre a buscar: ";
+    getline(cin, termino);
+    
+    bool encontrado = false;
+    
+    for(int i = 0; i < total; i++) {
+        if(arr[i].nombre.find(termino) != string::npos) {
+            if(!encontrado) {
+                cout << "\n--- RESULTADOS ENCONTRADOS ---" << endl;
+                encontrado = true;
+            }
+            
+            cout << "\nCodigo: " << arr[i].id << endl;
+            cout << "Nombre: " << arr[i].nombre << endl;
+            cout << "Proveedor: " << arr[i].proveedor << endl;
+            cout << "Precio: $" << fixed << setprecision(2) << arr[i].precio << endl;
+            cout << "Stock: " << arr[i].cantidad << " unidades" << endl;
+            cout << "Valor inventario: $" << arr[i].calcularValorTotal() << endl;
+            
+            if(arr[i].requiereReabastecimiento()) {
+                cout << "[ALERTA] Stock bajo! Minimo: " << arr[i].stockMinimo << endl;
+            }
+            cout << string(50, '-') << endl;
+        }
+    }
+    
+    if(!encontrado) {
+        throw ExcepcionProductoNoEncontrado("No se encontraron productos con ese nombre.");
+    }
+}
+
+void buscarProductoPorCodigo(Producto arr[], int total) {
+    int codigo;
+    cout << "\nIngrese codigo del producto: ";
+    cin >> codigo;
+    
+    Producto* resultado = localizarProducto(arr, total, codigo);
+    
+    cout << "\n--- INFORMACION DEL PRODUCTO ---" << endl;
+    cout << "Codigo: " << resultado->id << endl;
+    cout << "Nombre: " << resultado->nombre << endl;
+    cout << "Proveedor: " << resultado->proveedor << endl;
+    cout << "Precio unitario: $" << fixed << setprecision(2) << resultado->precio << endl;
+    cout << "Stock actual: " << resultado->cantidad << " unidades" << endl;
+    cout << "Stock minimo: " << resultado->stockMinimo << " unidades" << endl;
+    cout << "Valor total en inventario: $" << resultado->calcularValorTotal() << endl;
+    
+    if(resultado->requiereReabastecimiento()) {
+        cout << "\n[ALERTA] Este producto requiere reabastecimiento urgente!" << endl;
+    }
+}
+
+// Ordenamiento por burbuja (para precio)
+void aplicarOrdenamientoBurbuja(Producto arr[], int total, bool porPrecio) {
+    for(int i = 0; i < total - 1; i++) {
+        for(int j = 0; j < total - i - 1; j++) {
+            bool condicion = porPrecio ? 
+                (arr[j].precio > arr[j+1].precio) : 
+                (arr[j].nombre > arr[j+1].nombre);
+            
+            if(condicion) {
+                intercambiar(&arr[j], &arr[j+1]);
+            }
+        }
+    }
+}
+
+// Ordenamiento por selección (para cantidad)
+void aplicarOrdenamientoSeleccion(Producto arr[], int total) {
+    for(int i = 0; i < total - 1; i++) {
+        int indiceMinimo = i;
+        
+        for(int j = i + 1; j < total; j++) {
+            if(arr[j].cantidad < arr[indiceMinimo].cantidad) {
+                indiceMinimo = j;
+            }
+        }
+        
+        if(indiceMinimo != i) {
+            intercambiar(&arr[i], &arr[indiceMinimo]);
+        }
+    }
+}
+
+// Gestión de stock usando punteros (característica importante)
+void gestionarStockConPunteros(Producto* ptr) {
+    cout << "\n--- PRODUCTO SELECCIONADO ---" << endl;
+    cout << "Nombre: " << ptr->nombre << endl;
+    cout << "Stock actual: " << ptr->cantidad << " unidades" << endl;
+    cout << "Stock minimo: " << ptr->stockMinimo << " unidades" << endl;
+    
+    int opcion;
+    cout << "\n1. Aumentar stock (entrada)" << endl;
+    cout << "2. Disminuir stock (salida)" << endl;
+    cout << "3. Actualizar precio" << endl;
+    cout << "Seleccione operacion: ";
+    cin >> opcion;
+    
+    switch(opcion) {
+        case 1: {
+            int cantidad;
+            cout << "Unidades a agregar: ";
+            cin >> cantidad;
+            ptr->cantidad += cantidad;
+            cout << "\n[OK] Stock actualizado: " << ptr->cantidad << " unidades" << endl;
+            break;
+        }
+        case 2: {
+            int cantidad;
+            cout << "Unidades a retirar: ";
+            cin >> cantidad;
+            
+            if(ptr->cantidad < cantidad) {
+                throw ExcepcionStockInsuficiente("No hay suficiente stock para realizar esta operacion.");
+            }
+            
+            ptr->cantidad -= cantidad;
+            cout << "\n[OK] Stock actualizado: " << ptr->cantidad << " unidades" << endl;
+            
+            if(ptr->requiereReabastecimiento()) {
+                cout << "[ADVERTENCIA] Stock por debajo del minimo permitido!" << endl;
+            }
+            break;
+        }
+        case 3: {
+            double nuevoPrecio;
+            cout << "Precio actual: $" << fixed << setprecision(2) << ptr->precio << endl;
+            cout << "Nuevo precio: $";
+            cin >> nuevoPrecio;
+            
+            double diferencia = nuevoPrecio - ptr->precio;
+            double porcentaje = (diferencia / ptr->precio) * 100;
+            
+            ptr->precio = nuevoPrecio;
+            
+            cout << "\n[OK] Precio actualizado!" << endl;
+            cout << "Variacion: " << (porcentaje > 0 ? "+" : "") 
+                 << fixed << setprecision(2) << porcentaje << "%" << endl;
+            break;
+        }
+        default:
+            cout << "\n[ERROR] Operacion no valida." << endl;
+    }
+}
