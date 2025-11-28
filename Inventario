@@ -415,3 +415,113 @@ void gestionarStockConPunteros(Producto* ptr) {
             cout << "\n[ERROR] Operacion no valida." << endl;
     }
 }
+
+void mostrarAlertasStock(Producto arr[], int total) {
+    bool hayAlertas = false;
+    
+    cout << "\nRevisando inventario en busca de productos con stock bajo..." << endl;
+    cout << string(70, '-') << endl;
+    
+    for(int i = 0; i < total; i++) {
+        if(arr[i].requiereReabastecimiento()) {
+            if(!hayAlertas) {
+                cout << "\n[!] PRODUCTOS QUE REQUIEREN REABASTECIMIENTO:" << endl;
+                hayAlertas = true;
+            }
+            
+            cout << "\nCodigo: " << arr[i].id << endl;
+            cout << "Producto: " << arr[i].nombre << endl;
+            cout << "Stock actual: " << arr[i].cantidad << " unidades" << endl;
+            cout << "Stock minimo: " << arr[i].stockMinimo << " unidades" << endl;
+            cout << "Proveedor: " << arr[i].proveedor << endl;
+            cout << "Sugerencia: Ordenar al menos " 
+                 << (arr[i].stockMinimo - arr[i].cantidad + 5) << " unidades" << endl;
+            cout << string(50, '.');
+        }
+    }
+    
+    if(!hayAlertas) {
+        cout << "\n[OK] Todos los productos tienen stock adecuado." << endl;
+    }
+}
+
+void generarReporteSencillo(Producto arr[], int total) {
+    double valorTotalInventario = 0;
+    int totalUnidades = 0;
+    double precioPromedio = 0;
+    
+    cout << "\nGenerando reporte..." << endl;
+    
+    cout << string(70, '=') << endl;
+    
+    for(int i = 0; i < total; i++) {
+        valorTotalInventario += arr[i].calcularValorTotal();
+        totalUnidades += arr[i].cantidad;
+        precioPromedio += arr[i].precio;
+    }
+    
+    precioPromedio /= total;
+    
+    cout << "\nRESUMEN GENERAL DEL INVENTARIO:" << endl;
+    cout << string(70, '-') << endl;
+    cout << "Total de productos diferentes: " << total << endl;
+    cout << "Total de unidades en stock: " << totalUnidades << endl;
+    cout << "Valor total del inventario: $" << fixed << setprecision(2) 
+         << valorTotalInventario << endl;
+    cout << "Precio promedio por producto: $" << precioPromedio << endl;
+    
+    // Producto más caro
+    int indiceMasCaro = 0;
+    for(int i = 1; i < total; i++) {
+        if(arr[i].precio > arr[indiceMasCaro].precio) {
+            indiceMasCaro = i;
+        }
+    }
+    
+    cout << "\nProducto mas costoso: " << arr[indiceMasCaro].nombre 
+         << " ($" << arr[indiceMasCaro].precio << ")" << endl;
+    
+    // Producto con más stock
+    int indiceMayorStock = 0;
+    for(int i = 1; i < total; i++) {
+        if(arr[i].cantidad > arr[indiceMayorStock].cantidad) {
+            indiceMayorStock = i;
+        }
+    }
+    
+    cout << "Mayor stock: " << arr[indiceMayorStock].nombre 
+         << " (" << arr[indiceMayorStock].cantidad << " unidades)" << endl;
+    
+    cout << string(70, '=') << endl;
+}
+
+Producto* localizarProducto(Producto arr[], int total, int codigo) {
+    for(int i = 0; i < total; i++) {
+        if(arr[i].id == codigo) {
+            return &arr[i];  // Retorna puntero al producto
+        }
+    }
+    
+    throw ExcepcionProductoNoEncontrado("Producto no encontrado con el codigo especificado.");
+}
+
+void intercambiar(Producto* a, Producto* b) {
+    Producto temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+string obtenerFecha() {
+    time_t ahora = time(0);
+    tm* tiempoLocal = localtime(&ahora);
+    
+    char buffer[100];
+    strftime(buffer, sizeof(buffer), "%d/%m/%Y %H:%M", tiempoLocal);
+    return string(buffer);
+}
+
+void esperarUsuario() {
+    cout << "\n[Presione ENTER para continuar]";
+    cin.ignore();
+    cin.get();
+}
